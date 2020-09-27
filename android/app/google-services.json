@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "190839857146",
+    "firebase_url": "https://krshi-c8b10.firebaseio.com",
+    "project_id": "krshi-c8b10",
+    "storage_bucket": "krshi-c8b10.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:190839857146:android:74ee6d455de6cdd845ce43",
+        "android_client_info": {
+          "package_name": "com.example.Krshi"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "190839857146-ic8feeieekg0fqirrjqjlch7n630u4u9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMHYPbwwpGr7OIJbN5IM2GvDEwoko7120"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "190839857146-ic8feeieekg0fqirrjqjlch7n630u4u9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
