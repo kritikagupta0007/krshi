@@ -10,7 +10,7 @@ final kLabelStyle = TextStyle(
   color: Colors.black,
   fontWeight: FontWeight.bold,
   fontFamily: 'OpenSans',
-  fontSize: 16.0,
+  fontSize: 18.0,
 );
 
 final kBoxDecorationStyle = BoxDecoration(

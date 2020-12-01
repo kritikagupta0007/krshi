@@ -1,15 +1,79 @@
 import 'package:flutter/material.dart';
+import 'package:Krshi/main.dart';
+import 'package:Krshi/registration.dart';
+import 'package:Krshi/logic/mysql.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:Krshi/home.dart';
 import 'package:Krshi/style/constants.dart';
+import 'package:Krshi/registrationlogin.dart';
 
-class RegistrationForm extends StatefulWidget {
+class LoginPage extends StatefulWidget {
   @override
-  _RegistrationFormState createState() => _RegistrationFormState();
+  LoginPage({Key key}) : super(key: key);
+  _LoginPageState createState() => _LoginPageState();
 }
 
-class _RegistrationFormState extends State<RegistrationForm> {
+enum FormType {
+  login,
+}
+
+class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   String _email;
   String _password;
+  FormType _formType = FormType.login;
+  final FlutterTts flutterTts = FlutterTts();
+
+  bool validateandSave() {
+    final form = _formKey.currentState;
+    if (form.validate()) {
+      form.save();
+      return true;
+    }
+    return false;
+  }
+
+  void validateandSubmited() async {
+    if (validateandSave()) {
+      authorize();
+    }
+  }
+
+  var db = new Mysql();
+  String authlist = "";
+
+  void authorize() {
+    print(_email);
+    print(_password);
+    db.getConnection().then((conn) async {
+      String sql = "Select email, pass from login where email = '$_email'";
+      await conn.query(sql).then((results) {
+        for (var row in results) {
+          print(row);
+          if (row['email'] == _email && row['pass'].toString() == _password) {
+            authlist = _email;
+          }
+        }
+      });
+      if (authlist.length > 0) {
+        speak("Hello user, welcome to our app kreshi");
+        Navigator.push(
+            context,
+            new MaterialPageRoute(
+                builder: (BuildContext context) => new FormPage()));
+      } else {
+        speak("Authorization failed!! Wrong username or password");
+      }
+      conn.close();
+    });
+  }
+
+  void speak(String text) async {
+    await flutterTts.setLanguage("en_US");
+    await flutterTts.setSpeechRate(0.4);
+    await flutterTts.setPitch(1);
+    await flutterTts.speak(text);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,13 +106,16 @@ class _RegistrationFormState extends State<RegistrationForm> {
                 physics: AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.symmetric(
                   horizontal: 40.0,
-                  vertical: 110.0,
+                  vertical: 80.0,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
+                    //       CircleAvatar(
+                    // backgroundImage: AssetImage('assets/plant1.png',),
+                    // radius: 75,),
                     Text(
-                      'REGISTRATION',
+                      "Sign",
                       style: TextStyle(
                         color: Colors.white,
                         fontFamily: 'OpenSans',
@@ -63,16 +130,17 @@ class _RegistrationFormState extends State<RegistrationForm> {
                         shrinkWrap: true,
                         children: <Widget>[
                           SizedBox(
-                            height: 40.0,
+                            height: 30.0,
                           ),
-                          _buildEmail(),
-                          SizedBox(height: 10.0),
-                          _buildPassword(),
-                          SizedBox(height: 10.0),
-                          _buildConfirmPassword(),
-                          SizedBox(height: 10.0),
-                          _buildPhoneNumber(),
-                          _buildSubmitBtn(),
+                          _buildEmailTF(),
+                          SizedBox(height: 20.0),
+                          _buildPasswordTF(),
+                          SizedBox(height: 15.0),
+                          // _buildForgotPasswordBtn(),
+                          _buildLoginBtn(),
+                          SizedBox(height: 40.0),
+                          _buildText(),
+                          _buildRegisterBtn(),
                         ],
                       ),
                     ))
@@ -86,7 +154,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
     );
   }
 
-  Widget _buildEmail() {
+  Widget _buildEmailTF() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -124,7 +192,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
     );
   }
 
-  Widget _buildPassword() {
+  Widget _buildPasswordTF() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -145,6 +213,10 @@ class _RegistrationFormState extends State<RegistrationForm> {
             ),
             decoration: InputDecoration(
               border: InputBorder.none,
+              // border: OutlineInputBorder(
+              //     borderRadius: BorderRadius.circular(10.0),
+              //     borderSide:
+              //         BorderSide(color: Colors.greenAccent, width: 3.0)),
               contentPadding: EdgeInsets.only(top: 14.0),
               prefixIcon: Icon(
                 Icons.lock,
@@ -162,96 +234,38 @@ class _RegistrationFormState extends State<RegistrationForm> {
     );
   }
 
-  Widget _buildConfirmPassword() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          'Confirm Password',
+  Widget _buildForgotPasswordBtn() {
+    return Container(
+      alignment: Alignment.centerRight,
+      child: FlatButton(
+        onPressed: () => print('Forgot Password Button Pressed'),
+        padding: EdgeInsets.only(right: 0.0),
+        child: Text(
+          'Forgot Password?',
           style: kLabelStyle,
         ),
-        SizedBox(height: 10.0),
-        Container(
-          alignment: Alignment.centerLeft,
-          decoration: kBoxDecorationStyle,
-          height: 60.0,
-          child: new TextFormField(
-            obscureText: true,
-            style: TextStyle(
-              color: Colors.white,
-              fontFamily: 'OpenSans',
-            ),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.only(top: 14.0),
-              prefixIcon: Icon(
-                Icons.lock,
-                color: Colors.white,
-              ),
-              hintText: 'Confirm your Password',
-              hintStyle: kHintTextStyle,
-            ),
-            validator: (value) =>
-                value.isEmpty ? 'Password can\'t be empty' : null,
-            onSaved: (value) => _password = value,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildPhoneNumber() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          'Phone Number',
-          style: kLabelStyle,
-        ),
-        SizedBox(height: 10.0),
-        Container(
-          alignment: Alignment.centerLeft,
-          decoration: kBoxDecorationStyle,
-          height: 60.0,
-          child: new TextFormField(
-            keyboardType: TextInputType.phone,
-            style: TextStyle(
-              color: Colors.white,
-              fontFamily: 'OpenSans',
-            ),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.only(top: 14.0),
-              prefixIcon: Icon(
-                Icons.phone,
-                color: Colors.white,
-              ),
-              hintText: 'Enter your Phone Number',
-              hintStyle: kHintTextStyle,
-            ),
-            validator: (value) =>
-                value.isEmpty ? 'Email can\'t be empty' : null,
-            onSaved: (value) => _email = value,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSubmitBtn() {
+  Widget _buildLoginBtn() {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 25.0),
       width: double.infinity,
       child: RaisedButton(
         elevation: 5.0,
-        onPressed: () => print('Submit btn is prssed'),
-        padding: EdgeInsets.all(15.0),
+        onPressed: () => validateandSubmited(),
+        // {
+        //   Navigator.push(context,
+        //       MaterialPageRoute(builder: (BuildContext context) => FormPage()));
+        // },
+        padding: EdgeInsets.all(20.0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30.0),
         ),
         color: Colors.white,
         child: Text(
-          'SUBMIT',
+          'LOGIN',
           style: TextStyle(
             color: Color(0xFF527DAA),
             letterSpacing: 1.5,
@@ -260,6 +274,46 @@ class _RegistrationFormState extends State<RegistrationForm> {
             fontFamily: 'OpenSans',
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRegisterBtn() {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20),
+      width: double.infinity,
+      child: RaisedButton(
+        elevation: 5.0,
+        onPressed: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (BuildContext context) => RegistrationLogin()));
+        },
+        padding: EdgeInsets.all(20.0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30.0),
+        ),
+        color: Colors.white,
+        child: Text(
+          'REGISTRATION',
+          style: TextStyle(
+            color: Color(0xFF527DAA),
+            letterSpacing: 1.5,
+            fontSize: 18.0,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'OpenSans',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildText() {
+    return Center(
+      child: Text(
+        'Registration is done only by the Admin',
+        style: kLabelStyle,
       ),
     );
   }

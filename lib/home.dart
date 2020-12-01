@@ -1,134 +1,227 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:Krshi/logic/mysql.dart';
-//import 'package:date_format/date_format.dart';
-import 'package:flutter_rounded_date_picker/rounded_picker.dart';
+import 'package:Krshi/style/constants.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FormPage extends StatefulWidget {
   @override
+  FormPage({Key key}) : super(key: key);
   _FormPageState createState() => _FormPageState();
 }
 
 class _FormPageState extends State<FormPage> {
   final GlobalKey<FormState> _formKeyValue = new GlobalKey<FormState>();
-  var selectedType;
+
   var plot = new List();
   var db = new Mysql();
-  List<String> _accountType = <String>[
-    'Savings',
-    'Deposit',
-    'Checking',
-    'Brokerage'
-  ];
-  String farm;
-  Future<List> _farm(String farm) {
-    plot.clear();
-    print("Before");
-    print('$farm');
-    print("After");
+
+  List<String> _list = ["Select Representative"]; //representative name
+  int index = 0;
+  List<String> _list2 = ["Select the Farmers ID"]; //farmer id
+  int index2 = 0;
+  List<String> _list3 = ["Select the Booking ID"]; // booking id
+  int index3 = 0;
+  List<String> _list4 = ["Select the Crop Name"]; //
+  int index4 = 0;
+  List<String> _list5 = ["Select the Crop Stage"]; //
+  int index5 = 0;
+  List<String> _list6 = ["Select the Main Activity"]; //
+  int index6 = 0;
+  List<String> _list7 = ["Select the Machinery"]; //
+  int index7 = 0;
+
+  String plot_name = "", location = "";
+  double area;
+
+  String _repoDate = "",
+      _datetime = "",
+      _bookingiD = "",
+      cropname = "",
+      cropstage = "",
+      mainactivity = "",
+      machinery = "",
+      _qty = "",
+      _unit1 = "",
+      _runninghrs = "",
+      _dieselqty = "",
+      _dieselvalue = "",
+      _manPower = "",
+      _mannum = "",
+      _totalhr = "",
+      _remarks = "";
+
+  //returned by first function farmer_data
+  //List<String> _data2 = []; //returned by second function//returned by third funtion
+
+  void save_data_to_database() {
+    // print("Filing date = " + _datetime);
+    // print("Report date = " + _repoDate);
+    // print("Booking ID = " + _bookingiD);
+    // print('cropname ' + cropname);
+    // print("cropstage " + cropstage);
+    // print("diesel =" + _dieselqty);
+    // print("remark = " + _remarks);
     db.getConnection().then((conn) async {
-      String sql = "Select * from plot_data where farmer_ID ='$farm'";
+      String sql =
+          "INSERT INTO save_data VALUES('$_datetime', '$_repoDate', '$_bookingiD', '$cropname', '$cropstage', '$mainactivity', '$machinery', '$_qty', '$_unit1', '$_runninghrs', '$_dieselqty','$_dieselvalue', '$_manPower', '$_mannum', '$_totalhr','$_remarks')";
       await conn.query(sql).then((results) {
-        for (var row in results) {
-          print(row);
-          if (row['farmer_ID'] == farm) {
-            print(row['booking_ID']);
-            plot.add(row['booking_ID']);
-        }
-        }
-        print(plot);
+        print("Done!!");
       });
-      conn.close();
     });
   }
 
-void clear_data(String text){
-  if (text.length == 0){
-    plot.clear();
-  }
-}
-
-  Widget _drop(){
-    return  DropdownButton(
-                    items: _accountType
-                        .map((value) => DropdownMenuItem(
-                              child: Text(
-                                value,
-                                style: TextStyle(color: Color(0xff11b719)),
-                              ),
-                              value: value,
-                            ))
-                        .toList(),
-                    onChanged: (_accountType) {
-                      print('$_accountType');
-                      final snackBar = SnackBar(
-                        backgroundColor: Colors.black,
-                        content: Text('Selected Crop name is $_accountType',
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 18.0)),
-                      );
-                      Scaffold.of(context).showSnackBar((snackBar));
-                      setState(() {
-                        selectedType = _accountType;
-                      });
-                    },
-                    value: selectedType,
-                    isExpanded: false,
-                    hint: Text(
-                      'Choose Crop Type',
-                      style: TextStyle(color: Color(0xff11b719)),
-                    ),
-                  );
+  List<String> data2 = [];
+  Future<List<String>> representative_data() async {
+    setState(() {
+      _list2 = ["Select Farmer ID"];
+      _list3 = ["Select Booking ID"];
+    });
+    db.getConnection().then((conn) async {
+      String sql = "SELECT representative_name FROM representative";
+      await conn.query(sql).then((results) {
+        // var responseJson = json.decode(utf8.decode(results.bodyBytes));
+        for (var row in results) {
+          //yha shyd data 2 me translator lgega haan ruko main dekhta
+          // print(row['representative_name'].translate(to: 'hi'));
+          data2.add(row['representative_name']);
+        }
+      });
+      print("representative is = ");
+      print(data2);
+    });
+    return data2;
   }
 
-  Future<Widget> _dynamicdrop(List<dynamic> data) async{
-    return  DropdownButton(
-                    items: data
-                        .map((value) => DropdownMenuItem(
-                              child: Text(
-                                value,
-                                style: TextStyle(color: Color(0xff11b719)),
-                              ),
-                              value: value,
-                            ))
-                        .toList(),
-                    onChanged: (datas) {
-                      print('$datas');
-                      final snackBar = SnackBar(
-                        backgroundColor: Colors.black,
-                        content: Text('Selected Crop name is $datas',
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 18.0)),
-                      );
-                      Scaffold.of(context).showSnackBar((snackBar));
-                      setState(() {
-                        selectedType = datas;
-                      });
-                    },
-                    value: selectedType,
-                    isExpanded: false,
-                    hint: Text(
-                      'Choose Booking ID',
-                      style: TextStyle(color: Color(0xff11b719)),
-                    ),
-                  );
+  List<String> data = [];
+  Future<List<String>> farmer_data(String representative) async {
+    setState(() {
+      data = [];
+    });
+    //_data2 = [];//
+    //this will run a sql query
+    db.getConnection().then((conn) async {
+      String sql =
+          "SELECT farmer_ID FROM farmer_data where representative_ID = (SELECT representative_ID FROM representative WHERE representative_name='$representative')";
+      await conn.query(sql).then((results) {
+        for (var row in results) {
+          data.add(row['farmer_ID']);
+        }
+        setState(() {
+          _list2 = ["Select your Farmer ID"];
+          _list2.addAll(data);
+        });
+        print("Data inside function is = ");
+        print(_list2);
+      });
+    });
   }
 
-  //  void authorit(){
-  //   db.getConnection().then((conn) async {
-  //     String sql = "Select cropname from Cropname";
-  //     await conn.query(sql).then((results) {
-  //       for (var row in results) {
-  //         print(row);
-  //         }
+  Future<List<String>> booking_id(String farmer_ID) async {
+    List<String> data1 = [];
+    //this will also return a sql query
+    db.getConnection().then((conn) async {
+      String sql =
+          "Select booking_ID from plot_data where farmer_ID ='$farmer_ID'";
+      await conn.query(sql).then((results) {
+        for (var row in results) {
+          data1.add(row['booking_ID']);
+        }
+        setState(() {
+          _list3 = ["Select your Booking ID"];
+          _list3.addAll(data1);
+        });
+        print("Data inside function is = ");
+        print(data1);
+      });
+    });
+  }
 
-  //       }
-  //     );
-  //     conn.close();
-  //   });
-  // }
+  Future<List<String>> booking_data(String booking_ID) async {
+    db.getConnection().then((conn) async {
+      String sql = "Select * from plot_data where booking_ID ='$booking_ID'";
+      await conn.query(sql).then((results) {
+        for (var row in results) {
+          setState(() {
+            location = row['location'];
+            area = row['area'];
+          });
+        }
+      });
+    });
+  }
+
+  List<String> data3 = [];
+  Future<List<String>> _crop_name() async {
+    db.getConnection().then((conn) async {
+      String sql = "Select cropname from cropname ";
+      await conn.query(sql).then((results) {
+        for (var row in results) {
+          data3.add(row['cropname']);
+        }
+        setState(() {
+          _list4 = ["Select your Crop Name"];
+          _list4.addAll(data3);
+        });
+        print("Crop is = ");
+        print(data3);
+      });
+    });
+  }
+
+  Future<List<String>> crop_stage() async {
+    List<String> data4 = [];
+    db.getConnection().then((conn) async {
+      String sql = "Select crop_stage from cropstage ";
+      await conn.query(sql).then((results) {
+        for (var row in results) {
+          data4.add(row['crop_stage']);
+        }
+        setState(() {
+          _list5 = ["Select your Crop Stage"];
+          _list5.addAll(data4);
+        });
+        print("Crop stage is = ");
+        print(data4);
+      });
+    });
+  }
+
+  Future<List<String>> main_activity() async {
+    List<String> data5 = [];
+    db.getConnection().then((conn) async {
+      String sql = "Select mainactivity from mainactivity ";
+      await conn.query(sql).then((results) {
+        for (var row in results) {
+          data5.add(row['mainactivity']);
+        }
+        setState(() {
+          _list6 = ["Select your Main Activity"];
+          _list6.addAll(data5);
+        });
+        print("Main activity is = ");
+        print(data5);
+      });
+    });
+  }
+
+  Future<List<String>> machinary_used() async {
+    List<String> data6 = [];
+    db.getConnection().then((conn) async {
+      String sql = "Select machinery_used from machinery_used ";
+      await conn.query(sql).then((results) {
+        for (var row in results) {
+          data6.add(row['machinery_used']);
+        }
+        setState(() {
+          _list7 = ["Select Machine Used"];
+          _list7.addAll(data6);
+        });
+        print("Machine is = ");
+        print(data6);
+      });
+    });
+  }
 
   DateTime _currentdate = new DateTime.now();
   DateTime _repodate = new DateTime.now();
@@ -175,6 +268,16 @@ void clear_data(String text){
         _repodate = _chdate;
       });
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    representative_data();
+    _crop_name();
+    crop_stage();
+    main_activity();
+    machinary_used();
   }
 
   @override
@@ -240,26 +343,27 @@ void clear_data(String text){
                         Container(
                             child: Form(
                           key: _formKeyValue,
-                          autovalidate: true,
+                          //autovalidate: true,
                           child: ListView(
                               shrinkWrap: true,
                               scrollDirection: Axis.vertical,
                               children: <Widget>[
                                 _dateandTime(),
                                 _reportdate(),
-                                _representative(),
-                                _cropname(),
-                                _farmerID(),
+                                SizedBox(height: 10),
                                 _bookingID(),
-                               // _plotNum(),
                                 _cropStage(),
-                                _mainActivity(),
-                                _taskName(),
-                                _machinery(),
+                                SizedBox(height: 5),
                                 _quantity(),
                                 _unit(),
                                 _runningHours(),
                                 _dieselQty(),
+                                _dieselvalu(),
+                                _manpower(),
+                                _manpowernum(),
+                                _totalhrs(),
+                                _remark(),
+                                _buildsubmitBtn()
                               ]),
                         ))
                       ]),
@@ -271,6 +375,7 @@ void clear_data(String text){
   Widget _dateandTime() {
     String _formattedate =
         new DateFormat('MM-dd-yyyy / kk:mm:a').format(_currentdate);
+    _datetime = _formattedate;
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -298,8 +403,9 @@ void clear_data(String text){
 
   Widget _reportdate() {
     String _formatedate = new DateFormat.yMMMd().format(_repodate);
+    _repoDate = _formatedate;
     return Padding(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.all(8.0),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -315,8 +421,8 @@ void clear_data(String text){
                 SizedBox(width: 20),
                 Container(
                     decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30.0)),
+                        color: Color(0xFFB2FF59),
+                        borderRadius: BorderRadius.circular(10.0)),
                     child: Padding(
                       padding: const EdgeInsets.all(10.0),
                       child: Text(
@@ -325,13 +431,13 @@ void clear_data(String text){
                             fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                     )),
-                SizedBox(width: 20),
+                SizedBox(width: 16),
                 IconButton(
                   onPressed: () {
                     _choosedate(context);
                   },
                   icon: Icon(
-                    FontAwesomeIcons.calendarCheck,
+                    FontAwesomeIcons.calendarWeek,
                     size: 40,
                     color: Colors.green[800],
                   ),
@@ -340,635 +446,223 @@ void clear_data(String text){
         ));
   }
 
-  String selectedrepresentate;
-  Widget _representative() {
-    return Column(
-      children: [
-        StreamBuilder<QuerySnapshot>(
-            stream: Firestore.instance.collection("representative").snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData)
-                return Text("Loading.....");
-              else {
-                List<DropdownMenuItem> representItems = [];
-                for (int i = 0; i < snapshot.data.documents.length; i++) {
-                  DocumentSnapshot snap = snapshot.data.documents[i];
-                  //print(snap.documentID);
-                  representItems.add(
-                    DropdownMenuItem(
-                      child: Text(
-                        snap.documentID,
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 20.0,
-                        ),
-                      ),
-                      value: "${snap.documentID}",
-                    ),
-                  );
-                }
-                return Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Text(
-                          'Representative',
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(width: 50.0),
-                        DropdownButton(
-                          elevation: 100,
-                          items: representItems,
-                          onChanged: (representative) {
-                            final snackBar = SnackBar(
-                              backgroundColor: Colors.black,
-                              content: Text(
-                                  'Select the Representative $representative',
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 18.0)),
-                            );
-                            Scaffold.of(context).showSnackBar(snackBar);
-                            setState(() {
-                              selectedrepresentate = representative;
-                            });
-                          },
-                          value: selectedrepresentate,
-                          isExpanded: false,
-                          hint: new Text(
-                            "Select the Representative",
-                            style:
-                                TextStyle(color: Colors.black, fontSize: 20.0),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-            }),
-      ],
-    );
-  }
-
-  String selectedCropname;
-  Widget _cropname() {
-    return Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    'Crop Number',
-                    style: TextStyle(
-                      fontSize: 20.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(width: 50.0),
-                 _drop(),
-                ])));
-  }
-
-  Widget _farmerID() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          Text(
-            'Farmer ID',
-            style: TextStyle(
-              fontSize: 20.0,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(
-            width: 10.0,
-          ),
-          Container(
-              width: 150,
-              height: 30,
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  left: 20,
-                ),
-                child: new TextFormField(
-                  textAlign: TextAlign.center,
-                  //textAlignVertical: TextAlignVertical.center,
-                  onFieldSubmitted: (text) {
-                    print(text);
-                    clear_data(text);
-                    print("onsubmitted");
-                    //farm = value.trim();
-                    _farm(text);
-                  },
-                  decoration: InputDecoration(
-                    hoverColor: Colors.white,
-                    filled: true,
-                    fillColor: Colors.white,
-                    prefixIcon: Icon(Icons.filter_frames, color: Colors.grey),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0)),
-                  ),
-                  keyboardType: TextInputType.text,
-                  validator: (value) =>
-                      value.isEmpty ? 'Email can\'t be empty' : null,
-                  onSaved: (value) => farm = value.trim(),
-                ),
-              )),
-        ],
-      ),
-    );
-  }
-
   Widget _bookingID() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          DropdownButtonFormField(
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.all(15.0),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                isDense: true,
+                labelText: "Repersentative Name",
+              ),
+              style: kLabelStyle,
+              onTap: () async {
+                print("hi $data2");
+                try {
+                  _list = ["Select Representative"];
+                  setState(() {
+                    _list.addAll(data2);
+                  });
+                } catch (e) {
+                  print(e.message);
+                }
+              },
+              items: _list
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              value: _list[index],
+              onChanged: (_) async {
+                print(_);
+                farmer_data(_);
+              }),
+          SizedBox(height: 22),
+          DropdownButtonFormField(
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.all(15.0),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                isDense: true,
+                labelText: "Farmers ID",
+              ),
+              style: kLabelStyle,
+              items: _list2
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              value: _list2[index2],
+              onChanged: (_) async {
+                print(_);
+                booking_id(_);
+              }),
+          SizedBox(height: 22),
+          DropdownButtonFormField(
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.all(15.0),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                isDense: true,
+                labelText: "Booking ID",
+              ),
+              style: kLabelStyle,
+              items: _list3
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              value: _list3[index3],
+              onChanged: (_) async {
+                print(_);
+                _bookingiD = _;
+                booking_data(_);
+              }),
+          SizedBox(height: 15),
           Text(
-            'Booking ID',
-            style: TextStyle(
-              fontSize: 20.0,
-              fontWeight: FontWeight.bold,
-            ),
+            "Location $location",
+            style: kLabelStyle,
           ),
-          SizedBox(width: 20, ),
-          
-          // _dynamicdrop(plot),
-          // Container(
-          //     width: 150,
-          //     height: 30,
-          //     child: Padding(
-          //       padding: const EdgeInsets.only(
-          //         left: 20,
-          //       ),
-          //       child: new TextFormField(
-          //         textAlign: TextAlign.center,
-          //         textAlignVertical: TextAlignVertical.center,
-          //         decoration: InputDecoration(
-          //           hoverColor: Colors.white,
-          //           filled: true,
-          //           fillColor: Colors.white,
-          //           border: OutlineInputBorder(
-          //               borderRadius: BorderRadius.circular(20.0)),
-          //         ),
-          //         keyboardType: TextInputType.number,
-          //       ),
-          //     )),
+          SizedBox(height: 15),
+          Text(
+            "Area $area",
+            style: kLabelStyle,
+          ),
         ],
       ),
     );
   }
 
-  // String selectedplot;
-  // Widget _plotNum() {
-  //   return Column(
-  //     children: [
-  //       FutureBuilder<List>(
-  //           future: _farm('RA001'),
-  //           builder: (BuildContext, AsyncSnapshot<List<dynamic>> snapshot) {
-  //             if (!snapshot.hasData) return Text("Loading.....");
-  //             return DropdownButton(
-  //               elevation: 100,
-  //               items: snapshot.data
-  //                   .map((text) => DropdownMenuItem<dynamic>(
-  //                         child: Text(
-  //                           text,
-  //                           style: TextStyle(
-  //                             color: Colors.black,
-  //                             fontSize: 20.0,
-  //                           ),
-  //                         ),
-  //                         value: text,
-  //                       ))
-  //                   .toList(),
-  //               onChanged: (plotnum) {
-  //                 final snackBar = SnackBar(
-  //                   backgroundColor: Colors.black,
-  //                   content: Text('Selected Crop name is $plotnum',
-  //                       style: TextStyle(color: Colors.white, fontSize: 18.0)),
-  //                 );
-  //                 Scaffold.of(context).showSnackBar(snackBar);
-  //                 setState(() {
-  //                   selectedplot = plotnum;
-  //                 });
-  //               },
-  //               value: selectedplot,
-  //               isExpanded: false,
-  //               hint: new Text(
-  //                 "Choose Plot Number",
-  //                 style: TextStyle(color: Colors.black, fontSize: 20.0),
-  //               ),
-  //             );
-
-  //             // else {
-  //             //   List<DropdownMenuItem> plotList = [];
-  //             //   for (int i = 0; i < snapshot.data.documents.length; i++) {
-  //             //     DocumentSnapshot snap2 = snapshot.data.documents[i];
-  //             //     plotList.add(
-  //             //       DropdownMenuItem(
-  //             //         child: Text(
-  //             //           snap2.documentID,
-  //             //           style: TextStyle(
-  //             //             color: Colors.black,
-  //             //             fontSize: 20.0,
-  //             //           ),
-  //             //         ),
-  //             //         value: "${snap2.documentID}",
-  //             //       ),
-  //             //     );
-  //             //   }
-  //             //   return Padding(
-  //             //     padding: const EdgeInsets.all(10.0),
-  //             //     child: SingleChildScrollView(
-  //             //       scrollDirection: Axis.horizontal,
-  //             //       child: Row(
-  //             //         crossAxisAlignment: CrossAxisAlignment.center,
-  //             //         children: <Widget>[
-  //             //           Text(
-  //             //             'Plot Number',
-  //             //             style: TextStyle(
-  //             //               fontSize: 20.0,
-  //             //               fontWeight: FontWeight.bold,
-  //             //             ),
-  //             //           ),
-  //             //           SizedBox(width: 50.0),
-  //             //           DropdownButton(
-  //             //             elevation: 100,
-  //             //             items: plotList,
-  //             //             onChanged: (plotnum) {
-  //             //               final snackBar = SnackBar(
-  //             //                 backgroundColor: Colors.black,
-  //             //                 content: Text('Selected Crop name is $plotnum',
-  //             //                     style: TextStyle(
-  //             //                         color: Colors.white, fontSize: 18.0)),
-  //             //               );
-  //             //               Scaffold.of(context).showSnackBar(snackBar);
-  //             //               setState(() {
-  //             //                 selectedplot = plotnum;
-  //             //               });
-  //             //             },
-  //             //             value: selectedplot,
-  //             //             isExpanded: false,
-  //             //             hint: new Text(
-  //             //               "Choose Plot Number",
-  //             //               style:
-  //             //                   TextStyle(color: Colors.black, fontSize: 20.0),
-  //             //             ),
-  //             //           ),
-  //             //         ],
-  //             //       ),
-  //             //     ),
-  //             //   );
-  //           }),
-  //     ],
-  //   );
-  // }
-
-  String selectedcropstage;
   Widget _cropStage() {
-    return Column(
-      children: [
-        StreamBuilder<QuerySnapshot>(
-            stream: Firestore.instance.collection("cropstage").snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData)
-                return Text("Loading.....");
-              else {
-                List<DropdownMenuItem> cropList = [];
-                for (int i = 0; i < snapshot.data.documents.length; i++) {
-                  DocumentSnapshot snap = snapshot.data.documents[i];
-                  cropList.add(
-                    DropdownMenuItem(
-                      child: Text(
-                        snap.documentID,
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 20.0,
-                        ),
-                      ),
-                      value: "${snap.documentID}",
-                    ),
-                  );
-                }
-                return Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Text(
-                          'Crop Stage',
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(width: 50.0),
-                        DropdownButton(
-                          elevation: 100,
-                          items: cropList,
-                          onChanged: (cropstage) {
-                            final snackBar = SnackBar(
-                              backgroundColor: Colors.black,
-                              content: Text('Selected Crop name is $cropstage',
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 18.0)),
-                            );
-                            Scaffold.of(context).showSnackBar((snackBar));
-                            setState(() {
-                              selectedcropstage = cropstage;
-                            });
-                          },
-                          value: selectedcropstage,
-                          isExpanded: false,
-                          hint: new Text(
-                            "Choose Crop Stage",
-                            style:
-                                TextStyle(color: Colors.black, fontSize: 20.0),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-            }),
-      ],
-    );
-  }
-
-  String selectedMainActivity;
-  Widget _mainActivity() {
-    return Column(
-      children: [
-        StreamBuilder<QuerySnapshot>(
-            stream: Firestore.instance.collection("mainactivity").snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData)
-                return Text("Loading.....");
-              else {
-                List<DropdownMenuItem> activityList = [];
-                for (int i = 0; i < snapshot.data.documents.length; i++) {
-                  DocumentSnapshot snap = snapshot.data.documents[i];
-                  activityList.add(
-                    DropdownMenuItem(
-                      child: Text(
-                        snap.documentID,
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 20.0,
-                        ),
-                      ),
-                      value: "${snap.documentID}",
-                    ),
-                  );
-                }
-                return Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Text(
-                          'Main Activity',
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(width: 50.0),
-                        DropdownButton(
-                          elevation: 100,
-                          items: activityList,
-                          onChanged: (mainactivity) {
-                            final snackBar = SnackBar(
-                              backgroundColor: Colors.black,
-                              content: Text(
-                                  'Selected Activity is $mainactivity',
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 18.0)),
-                            );
-                            Scaffold.of(context).showSnackBar((snackBar));
-                            setState(() {
-                              selectedMainActivity = mainactivity;
-                            });
-                          },
-                          value: selectedMainActivity,
-                          isExpanded: false,
-                          hint: new Text(
-                            "Select Main Activity",
-                            style:
-                                TextStyle(color: Colors.black, fontSize: 20.0),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-            }),
-      ],
-    );
-  }
-
-  String selectedTaskName;
-  Widget _taskName() {
-    return Column(
-      children: [
-        StreamBuilder<QuerySnapshot>(
-            stream: Firestore.instance.collection("taskname").snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData)
-                return Text("Loading.....");
-              else {
-                List<DropdownMenuItem> taskList = [];
-                for (int i = 0; i < snapshot.data.documents.length; i++) {
-                  DocumentSnapshot snap = snapshot.data.documents[i];
-                  taskList.add(
-                    DropdownMenuItem(
-                      child: Text(
-                        snap.documentID,
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 20.0,
-                        ),
-                      ),
-                      value: "${snap.documentID}",
-                    ),
-                  );
-                }
-                return Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Text(
-                          'Task Name',
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(width: 50.0),
-                        DropdownButton(
-                          elevation: 100,
-                          items: taskList,
-                          onChanged: (taskname) {
-                            final snackBar = SnackBar(
-                              backgroundColor: Colors.black,
-                              content: Text('Selected Task name is $taskname',
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 18.0)),
-                            );
-                            Scaffold.of(context).showSnackBar((snackBar));
-                            setState(() {
-                              selectedTaskName = taskname;
-                            });
-                          },
-                          value: selectedTaskName,
-                          isExpanded: false,
-                          focusColor: Colors.white,
-                          hint: new Text(
-                            "Choose Crop Stage",
-                            style:
-                                TextStyle(color: Colors.black, fontSize: 20.0),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-            }),
-      ],
-    );
-  }
-
-  String selectedMachinery;
-  Widget _machinery() {
-    return Column(
-      children: [
-        StreamBuilder<QuerySnapshot>(
-            stream: Firestore.instance.collection("machinery").snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData)
-                return Text("Loading.....");
-              else {
-                List<DropdownMenuItem> machineList = [];
-                for (int i = 0; i < snapshot.data.documents.length; i++) {
-                  DocumentSnapshot snap = snapshot.data.documents[i];
-                  machineList.add(
-                    DropdownMenuItem(
-                      child: Text(
-                        snap.documentID,
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 20.0,
-                        ),
-                      ),
-                      value: "${snap.documentID}",
-                    ),
-                  );
-                }
-                return Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Text(
-                          'Machinery Used',
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(width: 50.0),
-                        DropdownButton(
-                          elevation: 100,
-                          items: machineList,
-                          onChanged: (machine) {
-                            final snackBar = SnackBar(
-                              backgroundColor: Colors.black,
-                              content: Text('Selected Machine name is $machine',
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 18.0)),
-                            );
-                            Scaffold.of(context).showSnackBar((snackBar));
-                            setState(() {
-                              selectedMachinery = machine;
-                            });
-                          },
-                          value: selectedMachinery,
-                          isExpanded: false,
-                          hint: new Text(
-                            "Machinery Used",
-                            style:
-                                TextStyle(color: Colors.black, fontSize: 20.0),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-            }),
-      ],
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          DropdownButtonFormField(
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.all(15.0),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                isDense: true,
+                labelText: "Crop Name",
+              ),
+              style: kLabelStyle,
+              items: _list4
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              value: _list4[index4],
+              onChanged: (_) {
+                print(_);
+                cropname = _;
+                setState(() {
+                  crop_stage();
+                });
+              }),
+          SizedBox(height: 22),
+          DropdownButtonFormField(
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.all(15.0),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                isDense: true,
+                labelText: "Crop Stage",
+              ),
+              style: kLabelStyle,
+              items: _list5
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              value: _list5[index5],
+              onChanged: (_) {
+                print(_);
+                cropstage = _;
+                main_activity();
+              }),
+          SizedBox(height: 22),
+          DropdownButtonFormField(
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.all(15.0),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                isDense: true,
+                labelText: "Main Activity Perform",
+              ),
+              style: kLabelStyle,
+              items: _list6
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              value: _list6[index6],
+              onChanged: (_) {
+                print(_);
+                mainactivity = _;
+                machinary_used();
+              }),
+          SizedBox(height: 22),
+          DropdownButtonFormField(
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.all(15.0),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                isDense: true,
+                labelText: "Machinery",
+              ),
+              style: kLabelStyle,
+              items: _list7
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              value: _list7[index7],
+              onChanged: (_) {
+                print(_);
+                machinery = _;
+              })
+        ],
+      ),
     );
   }
 
   Widget _quantity() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          Text(
-            'Quantity',
-            style: TextStyle(
-              fontSize: 20.0,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(
-            width: 70.0,
-          ),
+          // Text('Quantity', style: kLabelStyle),
+          // SizedBox(
+          //   width: 78.0,
+          // ),
           Container(
-              width: 150,
-              height: 30,
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  left: 20,
-                ),
-                child: new TextFormField(
-                  textAlign: TextAlign.center,
-                  textAlignVertical: TextAlignVertical.center,
+              alignment: Alignment.centerLeft,
+              height: 70.0,
+              child: new TextFormField(
                   decoration: InputDecoration(
-                    hoverColor: Colors.white,
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0)),
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-              )),
+                      contentPadding: const EdgeInsets.all(15.0),
+                      hoverColor: Colors.black,
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(10.0)),
+                      isDense: true,
+                      labelText: "Quantity"),
+                  style: kLabelStyle,
+                  keyboardType: TextInputType.text,
+                  onChanged: (value) {
+                    setState(() {
+                      _qty = value;
+                      print(_qty);
+                    });
+                  })),
         ],
       ),
     );
@@ -977,39 +671,33 @@ void clear_data(String text){
   Widget _unit() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          Text(
-            'Unit    ',
-            style: TextStyle(
-              fontSize: 20.0,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(
-            width: 90.0,
-          ),
+          // Text('Unit    ', style: kLabelStyle),
+          // SizedBox(
+          //   width: 90.0,
+          // ),
           Container(
-              width: 150,
-              height: 30,
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  left: 20,
-                ),
-                child: new TextFormField(
-                  textAlign: TextAlign.center,
-                  textAlignVertical: TextAlignVertical.center,
+              alignment: Alignment.centerLeft,
+              height: 70.0,
+              child: new TextFormField(
                   decoration: InputDecoration(
-                    hoverColor: Colors.white,
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0)),
-                  ),
+                      contentPadding: const EdgeInsets.all(15.0),
+                      hoverColor: Colors.black,
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(10.0)),
+                      isDense: true,
+                      labelText: "Unit"),
+                  style: kLabelStyle,
                   keyboardType: TextInputType.text,
-                ),
-              )),
+                  onChanged: (value) {
+                    setState(() {
+                      _unit1 = value;
+                      print(_unit1);
+                    });
+                  })),
         ],
       ),
     );
@@ -1018,39 +706,33 @@ void clear_data(String text){
   Widget _runningHours() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          Text(
-            'Running Hours',
-            style: TextStyle(
-              fontSize: 20.0,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(
-            width: 10.0,
-          ),
+          // Text('Running Hours', style: kLabelStyle),
+          // SizedBox(
+          //   width: 30.0,
+          // ),
           Container(
-              width: 150,
-              height: 30,
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  left: 20,
-                ),
-                child: new TextFormField(
-                  textAlign: TextAlign.center,
-                  textAlignVertical: TextAlignVertical.center,
+              alignment: Alignment.centerLeft,
+              height: 70.0,
+              child: new TextFormField(
                   decoration: InputDecoration(
-                    hoverColor: Colors.white,
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0)),
-                  ),
+                      contentPadding: const EdgeInsets.all(15.0),
+                      hoverColor: Colors.black,
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(10.0)),
+                      isDense: true,
+                      labelText: "Running Hours"),
+                  style: kLabelStyle,
                   keyboardType: TextInputType.number,
-                ),
-              )),
+                  onChanged: (value) {
+                    setState(() {
+                      _runninghrs = value;
+                      print(_runninghrs);
+                    });
+                  })),
         ],
       ),
     );
@@ -1059,40 +741,256 @@ void clear_data(String text){
   Widget _dieselQty() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          Text(
-            'Desel Qty',
-            style: TextStyle(
-              fontSize: 20.0,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(
-            width: 60.0,
-          ),
+          // Text('Desel Qty', style: kLabelStyle),
+          // SizedBox(
+          //   width: 65.0,
+          // ),
           Container(
-              width: 150,
-              height: 30,
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  left: 20,
-                ),
-                child: new TextFormField(
-                  textAlign: TextAlign.center,
-                  textAlignVertical: TextAlignVertical.center,
+              alignment: Alignment.centerLeft,
+              height: 70.0,
+              child: new TextFormField(
                   decoration: InputDecoration(
-                    hoverColor: Colors.white,
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0)),
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-              )),
+                      contentPadding: const EdgeInsets.all(15.0),
+                      hoverColor: Colors.black,
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(10.0)),
+                      isDense: true,
+                      labelText: "Diesel Quantity"),
+                  style: kLabelStyle,
+                  keyboardType: TextInputType.text,
+                  onChanged: (value) {
+                    setState(() {
+                      _dieselqty = value;
+                      print(_dieselqty);
+                    });
+                  })),
         ],
+      ),
+    );
+  }
+
+  Widget _dieselvalu() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          // Text('Desel Value', style: kLabelStyle),
+          // SizedBox(
+          //   width: 52.0,
+          // ),
+          Container(
+              alignment: Alignment.centerLeft,
+              height: 70.0,
+              child: new TextFormField(
+                  decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.all(15.0),
+                      hoverColor: Colors.black,
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(10.0)),
+                      isDense: true,
+                      labelText: "Diesel Value"),
+                  style: kLabelStyle,
+                  keyboardType: TextInputType.text,
+                  onChanged: (value) {
+                    setState(() {
+                      _dieselvalue = value;
+                      print(_dieselvalue);
+                    });
+                  })),
+        ],
+      ),
+    );
+  }
+
+  Widget _manpower() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          // Text('Man Power', style: kLabelStyle),
+          // SizedBox(
+          //   width: 55.0,
+          // ),
+          Container(
+              alignment: Alignment.centerLeft,
+              height: 70.0,
+              child: new TextFormField(
+                  decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.all(15.0),
+                      hoverColor: Colors.black,
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(10.0)),
+                      isDense: true,
+                      labelText: "Man Power"),
+                  style: kLabelStyle,
+                  keyboardType: TextInputType.text,
+                  onChanged: (value) {
+                    setState(() {
+                      _manPower = value;
+                      print(_manPower);
+                    });
+                  })),
+        ],
+      ),
+    );
+  }
+
+  Widget _manpowernum() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          // Text('Man Power Number', style: kLabelStyle),
+          // SizedBox(
+          //   width: 5.0,
+          // ),
+          Container(
+              alignment: Alignment.centerLeft,
+              height: 70.0,
+              child: new TextFormField(
+                  decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.all(15.0),
+                      hoverColor: Colors.black,
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(10.0)),
+                      isDense: true,
+                      labelText: "Man Power Number"),
+                  style: kLabelStyle,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    setState(() {
+                      _mannum = value;
+                      print(_mannum);
+                    });
+                  })),
+        ],
+      ),
+    );
+  }
+
+  Widget _totalhrs() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          // Text('Total Hours', style: kLabelStyle),
+          // SizedBox(
+          //   width: 60.0,
+          // ),
+          Container(
+              alignment: Alignment.centerLeft,
+              height: 70.0,
+              child: new TextFormField(
+                  decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.all(15.0),
+                      hoverColor: Colors.black,
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(10.0)),
+                      isDense: true,
+                      labelText: "Total Time"),
+                  style: kLabelStyle,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    setState(() {
+                      _totalhr = value;
+                      print("yes $_totalhr");
+                    });
+                  })),
+        ],
+      ),
+    );
+  }
+
+  Widget _remark() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          // Text('Remark', style: kLabelStyle),
+          // SizedBox(
+          //   height: 18.0,
+          // ),
+          Container(
+              alignment: Alignment.centerLeft,
+              height: 90.0,
+              child: new TextFormField(
+                  maxLines: 20,
+                  decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.all(15.0),
+                      hoverColor: Colors.black,
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(10.0)),
+                      isDense: true,
+                      labelText: "Remark"),
+                  style: kLabelStyle,
+                  keyboardType: TextInputType.text,
+                  onChanged: (value) {
+                    setState(() {
+                      _remarks = value;
+                      print("re $_remarks");
+                    });
+                  })),
+        ],
+      ),
+    );
+  }
+
+  void save_data() {
+    save_data_to_database();
+    alertbox(context);
+  }
+
+  void alertbox(BuildContext context) {
+    var alertDialog = AlertDialog(
+      title: Text('Form is saved Successfully'),
+      content: Text('Thank You for filing the form'),
+    );
+
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return alertDialog;
+        });
+  }
+
+  Widget _buildsubmitBtn() {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 25.0),
+      width: double.infinity,
+      child: RaisedButton(
+        elevation: 5.0,
+        onPressed: () {
+          save_data();
+        },
+        padding: EdgeInsets.all(15.0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30.0),
+        ),
+        color: Colors.white,
+        child: Text(
+          'SUBMIT',
+          style: TextStyle(
+            color: Color(0xFF527DAA),
+            letterSpacing: 1.5,
+            fontSize: 18.0,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'OpenSans',
+          ),
+        ),
       ),
     );
   }
